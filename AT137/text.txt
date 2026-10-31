@@ -1,0 +1,2 @@
+fetch('/hcf/microsite-search-terms', { method: 'POST' })
+  .then(response => console.log('Status:', response.status))

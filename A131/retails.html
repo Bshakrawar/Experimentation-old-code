@@ -1,0 +1,293 @@
+<script>
+    function waitUntil(predicate) {
+        var interval = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : 70;
+        return new Promise(function(resolve) {
+            var int = setInterval(function() {
+                predicate() && (resolve(predicate()), clearInterval(int), int = null);
+            }, interval);
+            setTimeout(function() {
+                null !== int && (clearInterval(int), console.log("condition false"));
+            }, 3e4);
+        });
+    }
+
+
+    waitUntil(function() {
+        return document.querySelector('#inner-wrap') && "function" == typeof jQuery && localStorage.getItem('AT131ProgressBarLength') !== null
+    }).then(function() {
+
+        //done
+        //current
+        var quoteBanner = jQuery(`<div class="AT131-mainContainer">
+        <div class="AT131-quote-banner">
+            <div class="quote-banner__close"></div>
+            <div class="quote-banner__left">
+                <div class="quote-banner__title">
+
+                </div>
+            </div>
+
+            <div class="quote-banner__right">
+                <div class="quote-banner__steps">
+                    <div class="quote-banner-title">
+                    	<p>
+                    		<img src='data:image/svg+xml,<svg width="13" height="9" viewBox="0 0 13 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.9226 0.244078C12.248 0.569515 12.248 1.09715 11.9226 1.42259L4.92259 8.42259C4.59715 8.74803 4.06951 8.74803 3.74408 8.42259L0.244078 4.92259C-0.0813592 4.59715 -0.0813592 4.06951 0.244078 3.74408C0.569515 3.41864 1.09715 3.41864 1.42259 3.74408L4.33333 6.65482L10.7441 0.244078C11.0695 -0.0813592 11.5972 -0.0813592 11.9226 0.244078Z" fill="%233A3637"/></svg>'><span>Progress saved</span>
+                        </p>
+                    </div>
+                    <div class="mobileSteps113">
+                        <div class="quote-banner-title-mobile nr-hide">
+                    	<p>
+                    		<img src='data:image/svg+xml,<svg width="13" height="9" viewBox="0 0 13 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.9226 0.244078C12.248 0.569515 12.248 1.09715 11.9226 1.42259L4.92259 8.42259C4.59715 8.74803 4.06951 8.74803 3.74408 8.42259L0.244078 4.92259C-0.0813592 4.59715 -0.0813592 4.06951 0.244078 3.74408C0.569515 3.41864 1.09715 3.41864 1.42259 3.74408L4.33333 6.65482L10.7441 0.244078C11.0695 -0.0813592 11.5972 -0.0813592 11.9226 0.244078Z" fill="%233A3637"/></svg>'><span>Progress saved</span>
+                        </p>
+                    </div>
+                    </div>
+                    <div class="quote-banner-container"></div>
+                </div>
+
+                <div class="quote-banner__action">
+                    <div class="quote-banner__price">
+                        <sup>From</sup>
+                      	<strong class="quoteBannerPriceDollar">$275<sup class="quoteBannerPriceCent">.92+</sup></strong>
+                        <sub class="quoteBannerPriceFrequency">fortnight</sub>
+                    </div>
+                    <a class="quote-banner__button" href="#">Resume quote</a>
+                </div>
+            </div>
+        </div>
+    </div>`).insertBefore(jQuery('body #inner-wrap'));
+
+
+        var quoteBannerContainer = quoteBanner.find('.quote-banner-container');
+        var quoteBannerTitle = quoteBanner.find('.quote-banner__title');
+        var quoteBannerPrice = quoteBanner.find('.quote-banner__price').hide();
+        var quoteBannerPriceDollar = quoteBanner.find('.quoteBannerPriceDollar');
+        var quoteBannerPriceCent = quoteBanner.find('.quoteBannerPriceCent');
+        var quoteBannerPriceFrequency = quoteBanner.find('.quoteBannerPriceFrequency');
+        var quoteBannerButton = quoteBanner.find('.quote-banner__button');
+        var mobileSteps = quoteBanner.find('.mobileSteps113');
+
+        var isHomePage = window.location.origin === 'https://www.hcf.com.au' && (window.location.pathname === '/' || window.location.pathname === '');
+        var stickyTriggerElement = isHomePage ?
+            jQuery('.resume-quote-container, .resume-quote').first() :
+            jQuery('#header').first();
+
+        var updateStickyState = function() {
+            if (!stickyTriggerElement.length) {
+                quoteBanner.removeClass('stickyStart');
+                return;
+            }
+
+            var triggerPoint = stickyTriggerElement.offset().top + stickyTriggerElement.outerHeight();
+            var hasPassedTrigger = jQuery(window).scrollTop() > triggerPoint;
+
+            if (hasPassedTrigger) {
+                quoteBanner.addClass('stickyStart');
+            } else {
+                quoteBanner.removeClass('stickyStart');
+            }
+        };
+
+        jQuery(window).off('scroll.AT131Sticky resize.AT131Sticky');
+        jQuery(window).on('scroll.AT131Sticky resize.AT131Sticky', updateStickyState);
+        updateStickyState();
+
+        var progressBarLength = parseInt(localStorage.getItem('AT131ProgressBarLength'), 10) || 0;
+        var activeStepValue = parseInt(localStorage.getItem('AT131ProgressBarActiveStep'), 10) || 0;
+        var completedUntilIndex = activeStepValue - 1;
+
+        for (var i = 0; i < progressBarLength; i++) {
+            quoteBannerContainer.append('<div class="quote-banner__step"><span>' + (i + 1) + '</span></div>');
+
+            if (i < progressBarLength - 1) {
+                quoteBannerContainer.append('<div class="quote-divider"></div>');
+            }
+        }
+
+        var bannerSteps = quoteBanner.find('.quote-banner__step');
+
+        var isProductSummary = false;
+        var isStayInTouch = false;
+        try {
+            var phiCurrentHash = JSON.parse(localStorage.getItem('phiQuoteData')).currentHash;
+            isProductSummary = phiCurrentHash === 'product-summary';
+            isStayInTouch = phiCurrentHash === 'stay-in-touch';
+        } catch (e) {
+            isProductSummary = false;
+            isStayInTouch = false;
+        }
+
+        var effectiveActiveStep = isStayInTouch ? activeStepValue + 1 : activeStepValue;
+
+        bannerSteps.each(function(index) {
+            var step = jQuery(this);
+
+            if (isProductSummary) {
+                //step.addClass('quoteCompleted');
+                if (index === bannerSteps.length - 1) {
+                    step.addClass('quoteCurrent');
+                } else {
+                    step.addClass('quoteCompleted');
+                }
+            } else if (index < effectiveActiveStep - 1) {
+                step.addClass('quoteCompleted');
+            } else if (index === effectiveActiveStep - 1) {
+                step.addClass('quoteCurrent');
+            } else {
+                step.addClass('quoteOnHold');
+            }
+        });
+
+        var completedStepsCount = bannerSteps.filter('.quoteCompleted').length;
+        var totalStepsCount = bannerSteps.length;
+
+        var currentStepEl = bannerSteps.filter('.quoteCurrent').first();
+        var currentStepNumber = currentStepEl.length ? bannerSteps.index(currentStepEl) + 1 : activeStepValue;
+
+        var hospitalPackageName = '';
+        try {
+            var phiDataForTitle = JSON.parse(localStorage.getItem('phiQuoteData') || '{}');
+            hospitalPackageName = phiDataForTitle && phiDataForTitle.selectedPackage ? phiDataForTitle.selectedPackage.packageName : '';
+        } catch (e) {
+            hospitalPackageName = '';
+        }
+
+        if (mobileSteps.length && totalStepsCount > 0) {
+            var progressBarNames = [];
+            try {
+                var parsedProgressBar = JSON.parse(localStorage.getItem('AT131ProgressBar'));
+                progressBarNames = Array.isArray(parsedProgressBar) ? parsedProgressBar : [];
+            } catch (e) {
+                progressBarNames = [];
+            }
+
+            var currentStepName = progressBarNames[currentStepNumber - 1] || '';
+
+            mobileSteps.html('<p>Step ' + currentStepNumber + '/' + totalStepsCount + '<span>: ' + (currentStepName ? ' ' + currentStepName : '') + '</span></p>');
+
+            var updateMobileStepsVisibility = function() {
+                var isDesktopView = window.matchMedia('(min-width: 768px)').matches;
+              var hasHospitalTitle = jQuery.trim(hospitalPackageName) !== '';
+
+                //if (isDesktopView && currentStepNumber >= 3) {
+              if (isDesktopView && (currentStepNumber >= 4 || hasHospitalTitle)) {
+                    mobileSteps.addClass('nr-hide');
+                } else {
+                    mobileSteps.removeClass('nr-hide');
+                }
+            };
+
+            updateMobileStepsVisibility();
+            jQuery(window).off('resize.AT131MobileSteps').on('resize.AT131MobileSteps', updateMobileStepsVisibility);
+        }
+
+        var phiQuoteData = {};
+
+        try {
+            phiQuoteData = JSON.parse(localStorage.getItem('phiQuoteData') || '{}');
+        } catch (e) {
+            phiQuoteData = {};
+        }
+
+        var packageName = phiQuoteData && phiQuoteData.selectedPackage ? phiQuoteData.selectedPackage.packageName : '';
+        var productSummaryPageUrl = phiQuoteData && phiQuoteData.selectedPackage ? phiQuoteData.selectedPackage.productSummaryPageUrl : '';
+        var currentHash = phiQuoteData && phiQuoteData.currentHash ? String(phiQuoteData.currentHash).trim() : '';
+        var quotePath = phiQuoteData && phiQuoteData.quotePath ? String(phiQuoteData.quotePath).trim().toLowerCase() : '';
+
+        if (packageName) {
+            quoteBannerTitle.text(packageName);
+        }
+
+        if (window.matchMedia('(min-width: 768px)').matches && jQuery.trim(quoteBannerTitle.text()) === '') {
+            quoteBanner.find('.quote-banner-title').appendTo(quoteBannerTitle);
+        }
+
+        if ((currentHash == 'stay-in-touch' || currentHash === 'product-summary') && productSummaryPageUrl) {
+            quoteBannerButton.attr('href', productSummaryPageUrl);
+        } else if (currentHash) {
+            var resumeBaseUrl = quotePath === 'direct' ?
+                '/insurance/health/get-a-quote/quick-quote#' :
+                '/insurance/health/get-a-quote/customise-cover#';
+            quoteBannerButton.attr('href', resumeBaseUrl + currentHash);
+        }
+
+        var paymentFrequencyCode = phiQuoteData && phiQuoteData.paymentFrequency ? phiQuoteData.paymentFrequency : 'W';
+        var frequencyLabelMap = {
+            M: 'monthly',
+            W: 'weekly',
+            F: 'fortnightly',
+            Q: 'quarterly',
+            H: 'half yearly',
+            Y: 'yearly'
+        };
+        var frequencyPriceKeyMap = {
+            M: 'priceMonthly',
+            W: 'priceWeekly',
+            F: 'priceFortnightly',
+            Q: 'priceQuarterly',
+            H: 'priceHalfYearly',
+            Y: 'priceYearly'
+        };
+
+        var frequencyLabel = frequencyLabelMap[paymentFrequencyCode] || '';
+        var prices = phiQuoteData && phiQuoteData.selectedPackage && phiQuoteData.selectedPackage.prices ?
+            phiQuoteData.selectedPackage.prices : [];
+        var latestPrice = prices.length ? prices[prices.length - 1] : null;
+
+        if (latestPrice && latestPrice.price !== undefined && latestPrice.price !== null && latestPrice.price !== '' && !frequencyLabel) {
+            var normalizedPrice = String(latestPrice.price).replace(/[$,\s]/g, '');
+
+            for (var freqCode in frequencyPriceKeyMap) {
+                if (frequencyPriceKeyMap.hasOwnProperty(freqCode)) {
+                    var freqPriceKey = frequencyPriceKeyMap[freqCode];
+                    var freqPriceValue = latestPrice[freqPriceKey];
+
+                    if (freqPriceValue !== undefined && freqPriceValue !== null && freqPriceValue !== '' &&
+                        String(freqPriceValue).replace(/[$,\s]/g, '') === normalizedPrice) {
+                        frequencyLabel = frequencyLabelMap[freqCode] || frequencyLabel;
+                        break;
+                    }
+                }
+            }
+        }
+
+        var priceKey = frequencyPriceKeyMap[paymentFrequencyCode];
+        var rawPriceValue = latestPrice && priceKey && latestPrice[priceKey] !== undefined && latestPrice[priceKey] !== null && latestPrice[priceKey] !== '' ?
+            latestPrice[priceKey] :
+            (latestPrice && latestPrice.price ? latestPrice.price : '');
+
+        if (frequencyLabel) {
+            quoteBannerPriceFrequency.text(frequencyLabel);
+        }
+
+        if (rawPriceValue !== null && rawPriceValue !== undefined && rawPriceValue !== '') {
+            var priceString = String(rawPriceValue).replace(/[$,\s]/g, '');
+            var splitPrice = priceString.split('.');
+            var dollars = splitPrice[0] || '0';
+            var cents = splitPrice[1] || '00';
+
+            if (cents.length === 1) {
+                cents = cents + '0';
+            }
+
+            cents = cents.substring(0, 2);
+
+            var dollarTextNode = quoteBannerPriceDollar.contents().filter(function() {
+                return this.nodeType === 3;
+            }).first();
+
+            if (dollarTextNode.length) {
+                dollarTextNode[0].nodeValue = '$' + dollars;
+            } else {
+                quoteBannerPriceDollar.prepend(document.createTextNode('$' + dollars));
+            }
+
+            quoteBannerPriceCent.text('.' + cents + '*');
+            quoteBannerPrice.show();
+        }
+
+        jQuery('.quote-banner__close').on('click', function() {
+            jQuery(".AT131-mainContainer").addClass('nr-hide');
+        });
+
+    });
+</script>

@@ -1,0 +1,37 @@
+<script>
+	function waitUntil(predicate) {
+		var interval = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : 70;
+		return new Promise(function(resolve) {
+			var int = setInterval(function() {
+				predicate() && (resolve(predicate()), clearInterval(int), int = null);
+			}, interval);
+			setTimeout(function() {
+				null !== int && (clearInterval(int), console.log("condition false"));
+			}, 3e4);
+		});
+	}
+
+	waitUntil(function() {
+		return document.querySelector('.hero-banner-container .btn-container') &&  "function" == typeof jQuery
+	}).then(function() {
+		jQuery('.hero-banner-container .btn-container .bannerButtonCTA a').text('Unlock your offer');
+	})
+</script>
+
+<style>
+	.bannerButtonCTA a {
+		font-size: 0;
+	}
+
+	.bannerButtonCTA a::after {
+		content: 'Unlock your offer';
+		font-size: 18px;
+	}
+
+	.hero-banner-container .btn-container .bannerButtonCTA a,
+	.hero-banner-container .btn-container .bannerButtonCTA a::after {
+		white-space: nowrap;
+		height: 62px;
+	}
+
+</style>

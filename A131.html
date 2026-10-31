@@ -1,0 +1,623 @@
+<script>
+function waitUntil(predicate) {
+  var interval = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : 70;
+  return new Promise(function(resolve) {
+    var int = setInterval(function() {
+      predicate() && (resolve(predicate()), clearInterval(int), int = null);
+    }, interval);
+    setTimeout(function() {
+      null !== int && (clearInterval(int), console.log("condition false"));
+    }, 3e4);
+  });
+}
+
+waitUntil(function() {
+  return document.querySelector('#inner-wrap') && "function" == typeof jQuery && localStorage.getItem('AT131ProgressBarLength') !== null
+}).then(function() {
+  var quoteBanner = jQuery(`<div class="AT131-mainContainer">
+    <div class="AT131-quote-banner">
+      <div class="quote-banner__close"></div>
+      <div class="quote-banner__left">
+        <div class="quote-banner__title"></div>
+      </div>
+      <div class="quote-banner__right">
+        <div class="quote-banner__steps">
+          <div class="quote-banner-title">
+            <p>
+              <img src='data:image/svg+xml,<svg width="13" height="9" viewBox="0 0 13 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.9226 0.244078C12.248 0.569515 12.248 1.09715 11.9226 1.42259L4.92259 8.42259C4.59715 8.74803 4.06951 8.74803 3.74408 8.42259L0.244078 4.92259C-0.0813592 4.59715 -0.0813592 4.06951 0.244078 3.74408C0.569515 3.41864 1.09715 3.41864 1.42259 3.74408L4.33333 6.65482L10.7441 0.244078C11.0695 -0.0813592 11.5972 -0.0813592 11.9226 0.244078Z" fill="%233A3637"/></svg>'>
+              <span>Progress saved</span>
+            </p>
+          </div>
+          <div class="mobileSteps113">
+            <div class="quote-banner-title-mobile nr-hide">
+              <p>
+                <img src='data:image/svg+xml,<svg width="13" height="9" viewBox="0 0 13 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.9226 0.244078C12.248 0.569515 12.248 1.09715 11.9226 1.42259L4.92259 8.42259C4.59715 8.74803 4.06951 8.74803 3.74408 8.42259L0.244078 4.92259C-0.0813592 4.59715 -0.0813592 4.06951 0.244078 3.74408C0.569515 3.41864 1.09715 3.41864 1.42259 3.74408L4.33333 6.65482L10.7441 0.244078C11.0695 -0.0813592 11.5972 -0.0813592 11.9226 0.244078Z" fill="%233A3637"/></svg>'>
+                <span>Progress saved</span>
+              </p>
+            </div>
+          </div>
+          <div class="quote-banner-container"></div>
+        </div>
+        <div class="quote-banner__action">
+          <div class="quote-banner__price">
+            <sup>From</sup>
+            <strong class="quoteBannerPriceDollar">$275<sup class="quoteBannerPriceCent">.92+</sup></strong>
+            <sub class="quoteBannerPriceFrequency">fortnight</sub>
+          </div>
+          <a class="quote-banner__button" href="#">Resume quote</a>
+        </div>
+      </div>
+    </div>
+  </div>`).insertBefore(jQuery('body #inner-wrap'));
+
+  var quoteBannerContainer = quoteBanner.find('.quote-banner-container');
+  var quoteBannerTitle = quoteBanner.find('.quote-banner__title');
+  var quoteBannerPrice = quoteBanner.find('.quote-banner__price').hide();
+  var quoteBannerPriceDollar = quoteBanner.find('.quoteBannerPriceDollar');
+  var quoteBannerPriceCent = quoteBanner.find('.quoteBannerPriceCent');
+  var quoteBannerPriceFrequency = quoteBanner.find('.quoteBannerPriceFrequency');
+  var quoteBannerButton = quoteBanner.find('.quote-banner__button');
+  var mobileSteps = quoteBanner.find('.mobileSteps113');
+
+  var isHomePage = window.location.origin === 'https://www.hcf.com.au' && (window.location.pathname === '/' || window.location.pathname === '');
+  var stickyTriggerElement = isHomePage ? jQuery('.resume-quote-container, .resume-quote').first() : jQuery('#header').first();
+
+  var updateStickyState = function() {
+    if (!stickyTriggerElement.length) {
+      quoteBanner.removeClass('stickyStart');
+      return;
+    }
+    var triggerPoint = stickyTriggerElement.offset().top + stickyTriggerElement.outerHeight();
+    var hasPassedTrigger = jQuery(window).scrollTop() > triggerPoint;
+    if (hasPassedTrigger) {
+      quoteBanner.addClass('stickyStart');
+    } else {
+      quoteBanner.removeClass('stickyStart');
+    }
+  };
+
+  jQuery(window).off('scroll.AT131Sticky resize.AT131Sticky');
+  jQuery(window).on('scroll.AT131Sticky resize.AT131Sticky', updateStickyState);
+  updateStickyState();
+
+  var progressBarLength = parseInt(localStorage.getItem('AT131ProgressBarLength'), 10) || 0;
+  var activeStepValue = parseInt(localStorage.getItem('AT131ProgressBarActiveStep'), 10) || 0;
+  var completedUntilIndex = activeStepValue - 1;
+
+  for (var i = 0; i < progressBarLength; i++) {
+    quoteBannerContainer.append('<div class="quote-banner__step"><span>' + (i + 1) + '</span></div>');
+    if (i < progressBarLength - 1) {
+      quoteBannerContainer.append('<div class="quote-divider"></div>');
+    }
+  }
+
+  var bannerSteps = quoteBanner.find('.quote-banner__step');
+  var isProductSummary = false;
+  var isStayInTouch = false;
+
+  try {
+    var phiCurrentHash = JSON.parse(localStorage.getItem('phiQuoteData')).currentHash;
+    isProductSummary = phiCurrentHash === 'product-summary';
+    isStayInTouch = phiCurrentHash === 'stay-in-touch';
+  } catch (e) {
+    isProductSummary = false;
+    isStayInTouch = false;
+  }
+
+  var effectiveActiveStep = isStayInTouch ? activeStepValue + 1 : activeStepValue;
+
+  bannerSteps.each(function(index) {
+    var step = jQuery(this);
+    if (isProductSummary) {
+      if (index === bannerSteps.length - 1) {
+        step.addClass('quoteCurrent');
+      } else {
+        step.addClass('quoteCompleted');
+      }
+    } else if (index < effectiveActiveStep - 1) {
+      step.addClass('quoteCompleted');
+    } else if (index === effectiveActiveStep - 1) {
+      step.addClass('quoteCurrent');
+    } else {
+      step.addClass('quoteOnHold');
+    }
+  });
+
+  var completedStepsCount = bannerSteps.filter('.quoteCompleted').length;
+  var totalStepsCount = bannerSteps.length;
+  var currentStepEl = bannerSteps.filter('.quoteCurrent').first();
+  var currentStepNumber = currentStepEl.length ? bannerSteps.index(currentStepEl) + 1 : activeStepValue;
+  var hospitalPackageName = '';
+
+  try {
+    var phiDataForTitle = JSON.parse(localStorage.getItem('phiQuoteData') || '{}');
+    hospitalPackageName = phiDataForTitle && phiDataForTitle.selectedPackage ? phiDataForTitle.selectedPackage.packageName : '';
+  } catch (e) {
+    hospitalPackageName = '';
+  }
+
+  if (mobileSteps.length && totalStepsCount > 0) {
+    var progressBarNames = [];
+    try {
+      var parsedProgressBar = JSON.parse(localStorage.getItem('AT131ProgressBar'));
+      progressBarNames = Array.isArray(parsedProgressBar) ? parsedProgressBar : [];
+    } catch (e) {
+      progressBarNames = [];
+    }
+
+    var currentStepName = progressBarNames[currentStepNumber - 1] || '';
+    mobileSteps.html('<p>Step ' + currentStepNumber + '/' + totalStepsCount + '<span>: ' + (currentStepName ? ' ' + currentStepName : '') + '</span></p>');
+
+    var updateMobileStepsVisibility = function() {
+      var isDesktopView = window.matchMedia('(min-width: 768px)').matches;
+      var hasHospitalTitle = jQuery.trim(hospitalPackageName) !== '';
+      if (isDesktopView && (currentStepNumber >= 4 || hasHospitalTitle)) {
+        mobileSteps.addClass('nr-hide');
+      } else {
+        mobileSteps.removeClass('nr-hide');
+      }
+    };
+
+    updateMobileStepsVisibility();
+    jQuery(window).off('resize.AT131MobileSteps').on('resize.AT131MobileSteps', updateMobileStepsVisibility);
+  }
+
+  var phiQuoteData = {};
+  try {
+    phiQuoteData = JSON.parse(localStorage.getItem('phiQuoteData') || '{}');
+  } catch (e) {
+    phiQuoteData = {};
+  }
+
+  var packageName = phiQuoteData && phiQuoteData.selectedPackage ? phiQuoteData.selectedPackage.packageName : '';
+  var productSummaryPageUrl = phiQuoteData && phiQuoteData.selectedPackage ? phiQuoteData.selectedPackage.productSummaryPageUrl : '';
+  var currentHash = phiQuoteData && phiQuoteData.currentHash ? String(phiQuoteData.currentHash).trim() : '';
+  var quotePath = phiQuoteData && phiQuoteData.quotePath ? String(phiQuoteData.quotePath).trim().toLowerCase() : '';
+
+  if (packageName) {
+    quoteBannerTitle.text(packageName);
+  }
+
+  if (window.matchMedia('(min-width: 768px)').matches && jQuery.trim(quoteBannerTitle.text()) === '') {
+    quoteBanner.find('.quote-banner-title').appendTo(quoteBannerTitle);
+  }
+
+  if ((currentHash == 'stay-in-touch' || currentHash === 'product-summary') && productSummaryPageUrl) {
+    quoteBannerButton.attr('href', productSummaryPageUrl);
+  } else if (currentHash) {
+    var resumeBaseUrl = quotePath === 'direct' ?
+      window.location.origin + '/' + window.location.pathname.split('/')[1] + '/insurance/health/get-a-quote/quick-quote#' :
+      window.location.origin + '/' + window.location.pathname.split('/')[1] + '/insurance/health/get-a-quote/customise-cover#';
+    quoteBannerButton.attr('href', resumeBaseUrl + currentHash);
+  }
+
+  var paymentFrequencyCode = phiQuoteData && phiQuoteData.paymentFrequency ? phiQuoteData.paymentFrequency : 'W';
+
+  var frequencyLabelMap = {
+    M: 'monthly',
+    W: 'weekly',
+    F: 'fortnightly',
+    Q: 'quarterly',
+    H: 'half yearly',
+    Y: 'yearly'
+  };
+
+  var frequencyPriceKeyMap = {
+    M: 'priceMonthly',
+    W: 'priceWeekly',
+    F: 'priceFortnightly',
+    Q: 'priceQuarterly',
+    H: 'priceHalfYearly',
+    Y: 'priceYearly'
+  };
+
+  var frequencyLabel = frequencyLabelMap[paymentFrequencyCode] || '';
+  var prices = phiQuoteData && phiQuoteData.selectedPackage && phiQuoteData.selectedPackage.prices ? phiQuoteData.selectedPackage.prices : [];
+  var latestPrice = prices.length ? prices[prices.length - 1] : null;
+
+  if (latestPrice && latestPrice.price !== undefined && latestPrice.price !== null && latestPrice.price !== '' && !frequencyLabel) {
+    var normalizedPrice = String(latestPrice.price).replace(/[$,\s]/g, '');
+    for (var freqCode in frequencyPriceKeyMap) {
+      if (frequencyPriceKeyMap.hasOwnProperty(freqCode)) {
+        var freqPriceKey = frequencyPriceKeyMap[freqCode];
+        var freqPriceValue = latestPrice[freqPriceKey];
+        if (freqPriceValue !== undefined && freqPriceValue !== null && freqPriceValue !== '' && String(freqPriceValue).replace(/[$,\s]/g, '') === normalizedPrice) {
+          frequencyLabel = frequencyLabelMap[freqCode] || frequencyLabel;
+          break;
+        }
+      }
+    }
+  }
+
+  var priceKey = frequencyPriceKeyMap[paymentFrequencyCode];
+  var rawPriceValue = latestPrice && priceKey && latestPrice[priceKey] !== undefined && latestPrice[priceKey] !== null && latestPrice[priceKey] !== '' ?
+    latestPrice[priceKey] :
+    (latestPrice && latestPrice.price ? latestPrice.price : '');
+
+  if (frequencyLabel) {
+    quoteBannerPriceFrequency.text(frequencyLabel);
+  }
+
+  if (rawPriceValue !== null && rawPriceValue !== undefined && rawPriceValue !== '') {
+    var priceString = String(rawPriceValue).replace(/[$,\s]/g, '');
+    var splitPrice = priceString.split('.');
+    var dollars = splitPrice[0] || '0';
+    var cents = splitPrice[1] || '00';
+
+    if (cents.length === 1) {
+      cents = cents + '0';
+    }
+    cents = cents.substring(0, 2);
+
+    var dollarTextNode = quoteBannerPriceDollar.contents().filter(function() {
+      return this.nodeType === 3;
+    }).first();
+
+    if (dollarTextNode.length) {
+      dollarTextNode[0].nodeValue = '$' + dollars;
+    } else {
+      quoteBannerPriceDollar.prepend(document.createTextNode('$' + dollars));
+    }
+
+    quoteBannerPriceCent.text('.' + cents + '*');
+    quoteBannerPrice.show();
+  }
+
+  jQuery('.quote-banner__close').on('click', function() {
+    jQuery(".AT131-mainContainer").addClass('nr-hide');
+  });
+});
+</script>
+
+
+<style>
+/* Main Container */
+.AT131-mainContainer {
+  display: none;
+  width: 100%;
+  background-color: #51284F;
+  box-shadow: 0px 25px 60px -15px rgba(16, 24, 40, 0.2);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  position: sticky;
+  top: 0;
+  z-index: 9999999;
+}
+
+.AT131-mainContainer.stickyStart {
+  display: flex;
+}
+
+#outer-wrap {
+  overflow: unset !important;
+}
+
+/* Quote Banner Layout */
+.AT131-quote-banner {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 55px 16px 31px;
+  gap: 6%;
+  align-items: center;
+}
+
+/* Close Button */
+.quote-banner__close:before {
+  content: '';
+  background-image: url("data:image/svg+xml,%3Csvg width='15' height='15' viewBox='0 0 15 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M0.21967 0.21967C0.512563 -0.0732233 0.987437 -0.0732233 1.28033 0.21967L7.5 6.43934L13.7197 0.21967C14.0126 -0.0732233 14.4874 -0.0732233 14.7803 0.21967C15.0732 0.512563 15.0732 0.987437 14.7803 1.28033L8.56066 7.5L14.7803 13.7197C15.0732 14.0126 15.0732 14.4874 14.7803 14.7803C14.4874 15.0732 14.0126 15.0732 13.7197 14.7803L7.5 8.56066L1.28033 14.7803C0.987437 15.0732 0.512563 15.0732 0.21967 14.7803C-0.0732233 14.4874 -0.0732233 14.0126 0.21967 13.7197L6.43934 7.5L0.21967 1.28033C-0.0732233 0.987437 -0.0732233 0.512563 0.21967 0.21967Z' fill='white'/%3E%3C/svg%3E%0A");
+  height: 15px;
+  width: 15px;
+  position: absolute;
+  right: 20px;
+  top: 16px;
+  cursor: pointer;
+}
+
+/* Left Section */
+.AT131-mainContainer .quote-banner__left {
+  width: 27.5%;
+  flex-shrink: 0;
+}
+
+.AT131-mainContainer .quote-banner__left .quote-banner__title {
+  width: fit-content;
+}
+
+/* Title Text */
+.AT131-mainContainer .quote-banner__title {
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+/* Right Section */
+.AT131-mainContainer .quote-banner__right {
+  width: 65%;
+  display: flex;
+  gap: 3%;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Steps Container */
+.AT131-mainContainer .quote-banner__steps {
+  width: auto;
+  display: flex;
+  align-items: center;
+  gap: 2%;
+  flex-wrap: nowrap;
+}
+
+.quote-banner__steps .quote-banner-container {
+  display: flex;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+/* Progress Step Badge */
+.quote-banner__step {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #716F6F;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  background: #FFFFFF;
+  border: 1px solid #D7D6D6;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+}
+
+.quote-banner__step::after {
+  display: none;
+}
+
+/* Completed Step */
+.quote-banner__step.quoteCompleted {
+  background: #e0004d;
+  border: 1px solid #e0004d;
+}
+
+.quote-banner__step.quoteCompleted:before {
+  content: '';
+  background-image: url('data:image/svg+xml,<svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.3536 0.146447C11.5488 0.341709 11.5488 0.658291 11.3536 0.853553L4.35355 7.85355C4.15829 8.04882 3.84171 8.04882 3.64645 7.85355L0.146447 4.35355C-0.0488155 4.15829 -0.0488155 3.84171 0.146447 3.64645C0.341709 3.45118 0.658291 3.45118 0.853553 3.64645L4 6.79289L10.6464 0.146447C10.8417 -0.0488155 11.1583 -0.0488155 11.3536 0.146447Z" fill="white"/></svg>');
+  width: 11.5px;
+  height: 8px;
+}
+
+.quote-banner__step.quoteCompleted span {
+  display: none;
+}
+
+/* Current Step */
+.quoteCurrent {
+  background-color: #fcefee;
+  color: #e0004d;
+  border-color: #e0004d;
+  font-weight: 600;
+}
+
+/* Step Divider */
+.quote-divider {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  height: auto;
+  margin: 8px;
+}
+
+.quote-divider::before {
+  content: '';
+  display: block;
+  width: 76px;
+  height: 2px;
+  background-image: url('data:image/svg+xml,<svg width="78" height="2" viewBox="0 0 78 2" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M77 1H1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+/* Progress Title Badge */
+.AT131-quote-banner .quote-banner-title {
+  background-color: #FFFFFF;
+  border: 1px solid #3A3637;
+  border-radius: 8px;
+  padding: 6px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.AT131-quote-banner .quote-banner-title > p {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  margin-bottom: 0;
+  color: #3a3637;
+}
+
+.AT131-quote-banner .quote-banner-title img {
+  padding-right: 7px;
+}
+
+/* Mobile Steps */
+.mobileSteps113 {
+  white-space: nowrap;
+}
+
+.mobileSteps113 p {
+  color: #FFFFFF;
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+}
+
+.mobileSteps113 p > span {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0;
+}
+
+/* Action Section */
+.AT131-mainContainer .quote-banner__action {
+  width: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Price Display */
+.quote-banner__action .quote-banner__price {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  color: #FFFFFF;
+}
+
+.quote-banner__action .quote-banner__price > sup {
+  top: -2em;
+}
+
+.quote-banner__action .quote-banner__price > strong {
+  font-size: 32px;
+  line-height: 30px;
+  letter-spacing: -0.96px;
+  font-weight: 700;
+}
+
+.quote-banner__action .quote-banner__price > strong > sup {
+  top: -1em;
+  font-size: 14px;
+  left: 5px;
+}
+
+.quote-banner__action .quote-banner__price > sub {
+  bottom: -0.50em;
+  left: -27px;
+}
+
+.quote-banner__action .quote-banner__price > sup,
+.quote-banner__action .quote-banner__price > sub {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+/* CTA Button */
+.quote-banner__action .quote-banner__button {
+  color: #FFFFFF;
+  width: 144px;
+  height: 48px;
+  background-color: #E0004D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.32px;
+  line-height: 24px;
+  text-decoration: none;
+}
+
+/* Utility */
+.nr-hide {
+  display: none !important;
+}
+
+/* Responsive - Large Tablets */
+@media (max-width: 1380px) {
+  .AT131-mainContainer .quote-banner__right {
+    flex-wrap: wrap;
+  }
+}
+
+/* Responsive - Tablets */
+@media (max-width: 1023px) {
+  .AT131-quote-banner {
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px 24px;
+  }
+
+  .AT131-mainContainer .quote-banner__left {
+    width: 100%;
+  }
+
+  .AT131-mainContainer .quote-banner__right {
+    width: 100%;
+    flex-direction: row;
+    gap: 16px;
+  }
+
+  .AT131-mainContainer .quote-banner__steps {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .quote-banner__steps .quote-banner-container {
+    display: flex;
+    gap: 8px;
+  }
+
+  .AT131-mainContainer .quote-banner__action {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .quote-banner__action .quote-banner__price {
+    font-size: 14px;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+  .AT131-quote-banner {
+    padding: 12px 16px;
+  }
+
+  .AT131-mainContainer .quote-banner__title {
+    font-size: 16px;
+  }
+
+  .AT131-quote-banner .quote-banner-title {
+    padding: 6px 8px;
+  }
+
+  .quote-banner__step {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+
+  .AT131-mainContainer .quote-banner__steps .quote-banner-container,
+  .AT131-mainContainer .quote-banner__left {
+    display: none !important;
+  }
+
+  .quote-banner__action .quote-banner__price {
+    display: none !important;
+  }
+
+  .quote-banner__action .quote-banner__button {
+    width: 100%;
+  }
+
+  .mobileSteps113 {
+    display: block;
+    font-size: 14px;
+    line-height: 20px;
+    color: #FFFFFF;
+  }
+
+  .mobileSteps113 p > span {
+    display: none;
+  }
+}
+</style>
